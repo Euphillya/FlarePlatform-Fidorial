@@ -13,6 +13,7 @@ include(
 )
 
 include("flare-fish")
+include("flare-fidorial")
 include("flare-canvas")
 
 gradle.lifecycle.beforeProject {

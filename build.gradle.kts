@@ -30,7 +30,7 @@ subprojects {
 
     tasks.withType<JavaCompile>().configureEach {
         options.encoding = Charsets.UTF_8.name()
-        options.release = 21
+        options.release = 25
         options.isFork = true
     }
     tasks.withType<ProcessResources>().configureEach {

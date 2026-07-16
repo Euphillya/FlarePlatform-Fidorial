@@ -1,0 +1,10 @@
+{
+    "id": "flare",
+    "name": "Flare",
+    "version": "1.0.0",
+    "main": "co.technove.flareplatform.fidorial.FlarePlatformFidorial",
+    "authors": [
+        "PaulBGD, SerlithNetwork"
+    ],
+    "depends": []
+}
