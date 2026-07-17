@@ -7,6 +7,7 @@ import co.technove.flareplatform.fidorial.manager.ProfilingManager;
 import fr.euphyllia.fidorial.api.command.CommandExecutor;
 import fr.euphyllia.fidorial.api.command.CommandSender;
 import fr.euphyllia.fidorial.api.entity.Player;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.util.Locale;
 
@@ -20,17 +21,19 @@ public class FlareCommand implements CommandExecutor {
     private static final String PREFIX = "<dark_gray>[</dark_gray><bold><#6A7EDA>✈</color></bold><dark_gray>]</dark_gray> ";
     private static final String MAIN = "<#6A7EDA>";
     private static final String HEX = "<#E3EAEA>";
+    private static final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     @Override
     public void execute(CommandSender sender, String label, String[] args) {
         FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
         if (platform == null) {
-            sender.sendMessage(PREFIX + "<red>Flare is not loaded.</red>");
+
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not loaded.</red>"));
             return;
         }
         if (platform.config().commandConsoleOnly() && !sender.isConsole()) {
-            sender.sendMessage(PREFIX + "<red>This command can only be used from the console"
-                + " (set command-console-only=false in plugins/flare/flare.properties to change this).</red>");
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>This command can only be used from the console"
+                + " (set command-console-only=false in plugins/flare/flare.properties to change this).</red>"));
             return;
         }
 
@@ -58,26 +61,26 @@ public class FlareCommand implements CommandExecutor {
         };
 
         if (ProfilingManager.isProfiling()) {
-            sender.sendMessage(PREFIX + "<red>A Flare is already running:</red> " + link(ProfilingManager.getProfilingUri()));
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>A Flare is already running:</red> " + link(ProfilingManager.getProfilingUri())));
             return;
         }
 
         try {
             if (ProfilingManager.start(type)) {
-                sender.sendMessage(PREFIX + MAIN + "Flare started (" + type.name().toLowerCase(Locale.ROOT)
-                    + "), it will run for 15 minutes unless stopped:</color> " + link(ProfilingManager.getProfilingUri()));
+                sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Flare started (" + type.name().toLowerCase(Locale.ROOT)
+                    + "), it will run for 15 minutes unless stopped:</color> " + link(ProfilingManager.getProfilingUri())));
             } else {
-                sender.sendMessage(PREFIX + "<red>Flare is already running.</red>");
+                sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is already running.</red>"));
             }
         } catch (UserReportableException e) {
-            sender.sendMessage(PREFIX + "<red>Flare failed to start: " + e.getUserError() + "</red>");
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare failed to start: " + e.getUserError() + "</red>"));
             logger().warn("Error starting Flare", e);
         }
     }
 
     private void stop(CommandSender sender) {
         if (!ProfilingManager.isProfiling()) {
-            sender.sendMessage(PREFIX + "<red>Flare is not running.</red>");
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not running.</red>"));
             return;
         }
         ProfilingManager.stop();
@@ -85,17 +88,17 @@ public class FlareCommand implements CommandExecutor {
 
     private void status(CommandSender sender) {
         if (!ProfilingManager.isProfiling()) {
-            sender.sendMessage(PREFIX + "<red>Flare is not running.</red>");
+            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not running.</red>"));
             return;
         }
         long seconds = ProfilingManager.getTimeRan().toSeconds();
-        sender.sendMessage(PREFIX + MAIN + "Flare has been running for " + seconds + "s:</color> "
-            + link(ProfilingManager.getProfilingUri()));
+        sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Flare has been running for " + seconds + "s:</color> "
+            + link(ProfilingManager.getProfilingUri())));
     }
 
     private void sendUsage(CommandSender sender, String label) {
-        sender.sendMessage(PREFIX + MAIN + "Usage:</color> " + HEX
-            + "/" + label + " profiler start [--cpu|--alloc|--lock|--wall|--ctimer] | stop | status</color>");
+        sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Usage:</color> " + HEX
+            + "/" + label + " profiler start [--cpu|--alloc|--lock|--wall|--ctimer] | stop | status</color>"));
     }
 
     private static String link(String uri) {
@@ -119,7 +122,7 @@ public class FlareCommand implements CommandExecutor {
             return;
         }
         for (Player player : platform.context().server().onlinePlayers()) {
-            player.sendMessage(message);
+            player.sendMessage(miniMessage.deserialize(message));
         }
     }
 

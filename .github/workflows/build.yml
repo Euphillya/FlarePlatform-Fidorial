@@ -46,6 +46,7 @@ jobs:
                 path: |
                   ./flare-paper/build/libs/flare-paper-2.0.${{ env.BUILD_NUMBER }}.jar
                   ./flare-velocity/build/libs/flare-velocity-2.0.${{ env.BUILD_NUMBER }}.jar
+                  ./flare-fidorial/build/libs/flare-fidorial-2.0.${{ env.BUILD_NUMBER }}.jar
 
             - name: Release Flare
               uses: softprops/action-gh-release@master
@@ -55,6 +56,7 @@ jobs:
                 files: |
                   ./flare-paper/build/libs/flare-paper-2.0.${{ env.BUILD_NUMBER }}.jar
                   ./flare-velocity/build/libs/flare-velocity-2.0.${{ env.BUILD_NUMBER }}.jar
+                  ./flare-fidorial/build/libs/flare-fidorial-2.0.${{ env.BUILD_NUMBER }}.jar
                 body_path: "./RELEASE.md"
                 token: "${{ secrets.GITHUB_TOKEN }}"
                 target_commitish: "${{ github.sha }}"
