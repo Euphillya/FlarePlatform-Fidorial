@@ -8,7 +8,6 @@ repositories {
 dependencies {
     implementation(projects.flareCommon)
     implementation(libs.oshi.core)
-    compileOnly(libs.jspecify)
     compileOnly(libs.fidorial.api)
 }
 
