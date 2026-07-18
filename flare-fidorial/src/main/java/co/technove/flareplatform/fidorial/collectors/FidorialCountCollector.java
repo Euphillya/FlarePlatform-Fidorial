@@ -4,7 +4,7 @@ import co.technove.flare.live.CollectorData;
 import co.technove.flare.live.LiveCollector;
 import co.technove.flare.live.formatter.SuffixFormatter;
 import co.technove.flareplatform.common.CustomCategories;
-import fr.euphyllia.fidorial.api.Server;
+import fr.fidorial.Server;
 
 import java.time.Duration;
 

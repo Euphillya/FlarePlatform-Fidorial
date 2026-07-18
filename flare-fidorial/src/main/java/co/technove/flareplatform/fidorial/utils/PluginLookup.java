@@ -1,7 +1,7 @@
 package co.technove.flareplatform.fidorial.utils;
 
-import fr.euphyllia.fidorial.api.Server;
-import fr.euphyllia.fidorial.api.plugin.PluginMeta;
+import fr.fidorial.Server;
+import fr.fidorial.plugin.PluginMeta;
 
 import java.util.Map;
 import java.util.Optional;

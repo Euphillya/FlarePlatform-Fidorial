@@ -4,8 +4,8 @@ import co.technove.flare.live.CollectorData;
 import co.technove.flare.live.LiveCollector;
 import co.technove.flare.live.formatter.SuffixFormatter;
 import co.technove.flareplatform.common.CustomCategories;
-import fr.euphyllia.fidorial.api.Server;
-import fr.euphyllia.fidorial.api.scheduler.RegionTps;
+import fr.fidorial.Server;
+import fr.fidorial.scheduler.RegionTps;
 
 import java.time.Duration;
 import java.util.List;

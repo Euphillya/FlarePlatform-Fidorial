@@ -16,7 +16,7 @@ import co.technove.flareplatform.fidorial.command.FlareCommand;
 import co.technove.flareplatform.fidorial.config.FlareFidorialConfig;
 import co.technove.flareplatform.fidorial.utils.PluginLookup;
 import co.technove.flareplatform.fidorial.utils.ServerConfigurations;
-import fr.euphyllia.fidorial.api.Server;
+import fr.fidorial.Server;
 import org.jspecify.annotations.Nullable;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;

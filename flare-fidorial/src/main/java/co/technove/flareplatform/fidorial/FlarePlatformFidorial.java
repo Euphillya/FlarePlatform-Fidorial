@@ -6,8 +6,8 @@ import co.technove.flareplatform.fidorial.command.FlareCommand;
 import co.technove.flareplatform.fidorial.config.FlareFidorialConfig;
 import co.technove.flareplatform.fidorial.manager.ProfilingManager;
 import co.technove.flareplatform.fidorial.utils.PluginLookup;
-import fr.euphyllia.fidorial.api.plugin.Plugin;
-import fr.euphyllia.fidorial.api.plugin.PluginContext;
+import fr.fidorial.plugin.Plugin;
+import fr.fidorial.plugin.PluginContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;

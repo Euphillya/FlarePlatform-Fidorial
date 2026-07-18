@@ -4,9 +4,9 @@ import co.technove.flare.exceptions.UserReportableException;
 import co.technove.flare.internal.profiling.ProfileType;
 import co.technove.flareplatform.fidorial.FlarePlatformFidorial;
 import co.technove.flareplatform.fidorial.manager.ProfilingManager;
-import fr.euphyllia.fidorial.api.command.CommandExecutor;
-import fr.euphyllia.fidorial.api.command.CommandSender;
-import fr.euphyllia.fidorial.api.entity.Player;
+import fr.fidorial.command.CommandExecutor;
+import fr.fidorial.command.CommandSender;
+import fr.fidorial.entity.Player;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import java.util.Locale;
