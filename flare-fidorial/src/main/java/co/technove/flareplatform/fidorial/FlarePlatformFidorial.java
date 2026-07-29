@@ -6,6 +6,7 @@ import co.technove.flareplatform.fidorial.command.FlareCommand;
 import co.technove.flareplatform.fidorial.config.FlareFidorialConfig;
 import co.technove.flareplatform.fidorial.manager.ProfilingManager;
 import co.technove.flareplatform.fidorial.utils.PluginLookup;
+import fr.fidorial.entity.Player;
 import fr.fidorial.plugin.Plugin;
 import fr.fidorial.plugin.PluginContext;
 import org.jspecify.annotations.Nullable;
@@ -16,25 +17,27 @@ import java.util.Locale;
 public class FlarePlatformFidorial implements Plugin {
 
     private static @Nullable FlarePlatformFidorial instance;
-    private static boolean shouldRegister = true;
 
     private @Nullable PluginContext context;
     private @Nullable FlareFidorialConfig config;
     private @Nullable PluginLookup lookup;
+
+    private boolean registered;
 
     public static @Nullable FlarePlatformFidorial getInstance() {
         return instance;
     }
 
     @Override
-    public void onLoad(PluginContext context) {
+    public void onLoad(final PluginContext context) {
         this.context = context;
         instance = this;
     }
 
     @Override
     public void onEnable() {
-        PluginContext ctx = context();
+        final PluginContext ctx = context();
+
         this.config = new FlareFidorialConfig(ctx.dataFolder(), ctx.logger());
         this.config.load();
 
@@ -42,10 +45,6 @@ public class FlarePlatformFidorial implements Plugin {
         final String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
         if (!osName.contains("linux") && !osName.contains("mac")) {
             ctx.logger().warn("Flare does not support running on {}, will not enable!", osName);
-            shouldRegister = false;
-        }
-
-        if (!shouldRegister) {
             return;
         }
 
@@ -54,9 +53,13 @@ public class FlarePlatformFidorial implements Plugin {
             if (!warnings.isEmpty()) {
                 ctx.logger().warn("Warnings while initializing Flare: {}", String.join(", ", warnings));
             }
-            ctx.server().commands().register("flare", new FlareCommand());
+
+            ctx.server().commands().register(FlareCommand.create());
+            this.registered = true;
+            refreshCommands();
+
             this.lookup = new PluginLookup(ctx.server());
-        } catch (InitializationException e) {
+        } catch (final InitializationException e) {
             ctx.logger().error("Failed to initialize Flare", e);
         }
     }
@@ -66,27 +69,41 @@ public class FlarePlatformFidorial implements Plugin {
         if (ProfilingManager.isProfiling()) {
             ProfilingManager.stop();
         }
-        if (context != null) {
-            context.server().commands().unregister("flare");
+
+        if (this.registered && this.context != null) {
+            this.context.server().commands().unregister(FlareCommand.COMMAND_NAME);
+            refreshCommands();
+            this.registered = false;
         }
+
         ProfilingManager.shutdown();
+
+        if (instance == this) {
+            instance = null;
+        }
+    }
+
+    private void refreshCommands() {
+        for (final Player player : context().server().onlinePlayers()) {
+            player.refreshCommands();
+        }
     }
 
     public PluginContext context() {
-        if (context == null) {
+        if (this.context == null) {
             throw new IllegalStateException("Plugin not loaded yet");
         }
-        return context;
+        return this.context;
     }
 
     public FlareFidorialConfig config() {
-        if (config == null) {
+        if (this.config == null) {
             throw new IllegalStateException("Config not loaded yet");
         }
-        return config;
+        return this.config;
     }
 
     public @Nullable PluginLookup getPluginLookup() {
-        return lookup;
+        return this.lookup;
     }
 }

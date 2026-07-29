@@ -4,130 +4,167 @@ import co.technove.flare.exceptions.UserReportableException;
 import co.technove.flare.internal.profiling.ProfileType;
 import co.technove.flareplatform.fidorial.FlarePlatformFidorial;
 import co.technove.flareplatform.fidorial.manager.ProfilingManager;
-import fr.fidorial.command.CommandExecutor;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import fr.fidorial.command.CommandSender;
+import fr.fidorial.command.CommandSource;
 import fr.fidorial.entity.Player;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
-import java.util.Locale;
+import static fr.fidorial.command.Commands.literal;
 
 /**
  * /flare profiler start [--cpu|--alloc|--lock|--wall|--ctimer]
  * /flare profiler stop
  * /flare profiler status
  */
-public class FlareCommand implements CommandExecutor {
+public final class FlareCommand {
+
+    public static final String COMMAND_NAME = "flare";
+    public static final String PERMISSION = "flare.use";
 
     private static final String PREFIX = "<dark_gray>[</dark_gray><bold><#6A7EDA>✈</color></bold><dark_gray>]</dark_gray> ";
     private static final String MAIN = "<#6A7EDA>";
     private static final String HEX = "<#E3EAEA>";
-    private static final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    @Override
-    public void execute(CommandSender sender, String label, String[] args) {
-        FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
-        if (platform == null) {
+    private static final List<Map.Entry<String, ProfileType>> PROFILE_TYPES = List.of(
+        Map.entry("--cpu", ProfileType.ITIMER),
+        Map.entry("--alloc", ProfileType.ALLOC),
+        Map.entry("--lock", ProfileType.LOCK),
+        Map.entry("--wall", ProfileType.WALL),
+        Map.entry("--ctimer", ProfileType.CTIMER)
+    );
 
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not loaded.</red>"));
-            return;
-        }
-        if (platform.config().commandConsoleOnly() && !sender.isConsole()) {
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>This command can only be used from the console"
-                + " (set command-console-only=false in plugins/flare/flare.properties to change this).</red>"));
-            return;
-        }
-
-        if (args.length == 0 || !args[0].equalsIgnoreCase("profiler")) {
-            sendUsage(sender, label);
-            return;
-        }
-
-        String action = args.length >= 2 ? args[1].toLowerCase(Locale.ROOT) : "";
-        switch (action) {
-            case "start" -> start(sender, args.length >= 3 ? args[2] : "--cpu");
-            case "stop" -> stop(sender);
-            case "status" -> status(sender);
-            default -> sendUsage(sender, label);
-        }
+    private FlareCommand() {
     }
 
-    private void start(CommandSender sender, String rawType) {
-        ProfileType type = switch (rawType.toLowerCase(Locale.ROOT)) {
-            case "--alloc" -> ProfileType.ALLOC;
-            case "--lock" -> ProfileType.LOCK;
-            case "--wall" -> ProfileType.WALL;
-            case "--ctimer" -> ProfileType.CTIMER;
-            default -> ProfileType.ITIMER; // --cpu
-        };
+    public static LiteralCommandNode<CommandSource> create() {
+        final LiteralArgumentBuilder<CommandSource> start = literal("start")
+            .executes(ctx -> start(ctx, ProfileType.ITIMER));
+
+        for (final Map.Entry<String, ProfileType> entry : PROFILE_TYPES) {
+            start.then(literal(entry.getKey()).executes(ctx -> start(ctx, entry.getValue())));
+        }
+
+        return literal(COMMAND_NAME)
+            .requires(FlareCommand::canUse)
+            .executes(FlareCommand::usage)
+            .then(literal("profiler")
+                .executes(FlareCommand::usage)
+                .then(start)
+                .then(literal("stop").executes(FlareCommand::stop))
+                .then(literal("status").executes(FlareCommand::status)))
+            .build();
+    }
+
+
+    private static boolean canUse(final CommandSource source) {
+        final FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
+        if (platform == null) {
+            return false;
+        }
+
+        final CommandSender sender = source.sender();
+
+        if (platform.config().commandConsoleOnly() && sender instanceof Player) {
+            return false;
+        }
+
+        return sender.isOperator() || sender.hasPermission(PERMISSION);
+    }
+
+    private static int start(final CommandContext<CommandSource> ctx, final ProfileType type) {
+        final CommandSender sender = ctx.getSource().sender();
 
         if (ProfilingManager.isProfiling()) {
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>A Flare is already running:</red> " + link(ProfilingManager.getProfilingUri())));
-            return;
+            send(sender, PREFIX + "<red>A Flare is already running:</red> " + link(ProfilingManager.getProfilingUri()));
+            return 0;
         }
 
         try {
             if (ProfilingManager.start(type)) {
-                sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Flare started (" + type.name().toLowerCase(Locale.ROOT)
-                    + "), it will run for 15 minutes unless stopped:</color> " + link(ProfilingManager.getProfilingUri())));
+                send(sender, PREFIX + MAIN + "Flare started (" + type.name().toLowerCase(Locale.ROOT)
+                    + "), it will run for 15 minutes unless stopped:</color> "
+                    + link(ProfilingManager.getProfilingUri()));
             } else {
-                sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is already running.</red>"));
+                send(sender, PREFIX + "<red>Flare is already running.</red>");
+                return 0;
             }
-        } catch (UserReportableException e) {
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare failed to start: " + e.getUserError() + "</red>"));
+        } catch (final UserReportableException e) {
+            send(sender, PREFIX + "<red>Flare failed to start: " + MM.escapeTags(e.getUserError()) + "</red>");
             logger().warn("Error starting Flare", e);
+            return 0;
         }
+
+        return Command.SINGLE_SUCCESS;
     }
 
-    private void stop(CommandSender sender) {
+    private static int stop(final CommandContext<CommandSource> ctx) {
         if (!ProfilingManager.isProfiling()) {
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not running.</red>"));
-            return;
+            send(ctx.getSource().sender(), PREFIX + "<red>Flare is not running.</red>");
+            return 0;
         }
+
         ProfilingManager.stop();
+        return Command.SINGLE_SUCCESS;
     }
 
-    private void status(CommandSender sender) {
+    private static int status(final CommandContext<CommandSource> ctx) {
+        final CommandSender sender = ctx.getSource().sender();
+
         if (!ProfilingManager.isProfiling()) {
-            sender.sendMessage(miniMessage.deserialize(PREFIX + "<red>Flare is not running.</red>"));
-            return;
+            send(sender, PREFIX + "<red>Flare is not running.</red>");
+            return 0;
         }
-        long seconds = ProfilingManager.getTimeRan().toSeconds();
-        sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Flare has been running for " + seconds + "s:</color> "
-            + link(ProfilingManager.getProfilingUri())));
+
+        final long seconds = ProfilingManager.getTimeRan().toSeconds();
+        send(sender, PREFIX + MAIN + "Flare has been running for " + seconds + "s:</color> "
+            + link(ProfilingManager.getProfilingUri()));
+
+        return Command.SINGLE_SUCCESS;
     }
 
-    private void sendUsage(CommandSender sender, String label) {
-        sender.sendMessage(miniMessage.deserialize(PREFIX + MAIN + "Usage:</color> " + HEX
-            + "/" + label + " profiler start [--cpu|--alloc|--lock|--wall|--ctimer] | stop | status</color>"));
+    private static int usage(final CommandContext<CommandSource> ctx) {
+        final String flags = String.join("|", PROFILE_TYPES.stream().map(Map.Entry::getKey).toList());
+        send(ctx.getSource().sender(), PREFIX + MAIN + "Usage:</color> " + HEX
+            + "/" + COMMAND_NAME + " profiler start [" + flags + "] | stop | status</color>");
+        return Command.SINGLE_SUCCESS;
     }
 
-    private static String link(String uri) {
+    private static void send(final CommandSender sender, final String message) {
+        sender.sendMessage(MM.deserialize(message));
+    }
+
+    private static String link(final String uri) {
         return "<click:open_url:'" + uri + "'>" + HEX + uri + "</color></click>";
     }
 
-    public static void broadcastStopped(String profilingUri) {
-        String message = PREFIX + MAIN + "Profiling has been stopped.</color> " + link(profilingUri);
-        broadcast(message);
+    public static void broadcastStopped(final String profilingUri) {
+        broadcast(PREFIX + MAIN + "Profiling has been stopped.</color> " + link(profilingUri));
         logger().info("Profiling has been stopped: {}", profilingUri);
     }
 
     public static void broadcastException() {
-        String message = PREFIX + "<red>Profiling failed, check the console for details.</red>";
-        broadcast(message);
+        broadcast(PREFIX + "<red>Profiling failed, check the console for details.</red>");
     }
 
-    private static void broadcast(String message) {
-        FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
+    private static void broadcast(final String message) {
+        final FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
         if (platform == null) {
             return;
         }
-        for (Player player : platform.context().server().onlinePlayers()) {
-            player.sendMessage(miniMessage.deserialize(message));
-        }
+
+        platform.context().server().sendMessage(MM.deserialize(message));
     }
 
     private static org.slf4j.Logger logger() {
-        FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
+        final FlarePlatformFidorial platform = FlarePlatformFidorial.getInstance();
         if (platform == null) {
             throw new IllegalStateException("Flare plugin is not loaded");
         }

@@ -20,7 +20,7 @@ bstats = "3.2.1"
 [libraries]
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
-fidorial-api = { module = "fr.euphyllia.fidorial:fidorial-api", version.ref = "fidorial-api" }
+fidorial-api = { module = "fr.fidorial:fidorial-api", version.ref = "fidorial-api" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 oshi-core = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
 flare = { module = "net.serlith:Flare", version.ref = "flare" }

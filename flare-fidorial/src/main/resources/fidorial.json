@@ -4,7 +4,17 @@
     "version": "1.0.0",
     "main": "co.technove.flareplatform.fidorial.FlarePlatformFidorial",
     "authors": [
-        "PaulBGD, SerlithNetwork"
+        "PaulBGD",
+        "SerlithNetwork",
+        "Euphyllia"
     ],
-    "depends": []
+    "depends": [],
+    "defaultPermission": "op",
+    "permissions": {
+        "flare.use": {
+            "description": "Autorise la commande /flare",
+            "operator": "TRUE",
+            "regular": "FALSE"
+        }
+    }
 }
