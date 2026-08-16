@@ -1,7 +1,9 @@
 name: Build All
 
 on:
-    workflow_dispatch:
+  push:
+    branches:
+      - support-fidorial
 
 jobs:
     build:
