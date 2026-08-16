@@ -54,7 +54,7 @@ public class FlarePlatformFidorial implements Plugin {
                 ctx.logger().warn("Warnings while initializing Flare: {}", String.join(", ", warnings));
             }
 
-            ctx.server().commands().register(FlareCommand.create());
+            ctx.server().commands().register(ctx.meta(), FlareCommand.create());
             this.registered = true;
             refreshCommands();
 
@@ -71,7 +71,7 @@ public class FlarePlatformFidorial implements Plugin {
         }
 
         if (this.registered && this.context != null) {
-            this.context.server().commands().unregister(FlareCommand.COMMAND_NAME);
+            this.context.server().commands().unregisterNamespace(context.meta());
             refreshCommands();
             this.registered = false;
         }
